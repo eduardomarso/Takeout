@@ -29,7 +29,7 @@ for i in "${!files[@]}"; do
 
   # skip if filename is empty
   if [ -z "$filename" ]; then
-	  continue
+    continue
   fi
 
   # update filename with subscript if found
@@ -64,9 +64,6 @@ for i in "${!files[@]}"; do
       ln "$file" "$fullpath.json"
     fi
 
-    # set modification time from unix timestamp
-    touch -m -t "$(date -d @"$timestamp" +%Y%m%d%H%M.%S)" "$fullpath"
-
     # append to fullpaths file
     echo "$fullpath" >> "$fullpaths"
 
@@ -91,7 +88,7 @@ if [[ ! $REPLY =~ ^[Yy]$ ]]; then
   exit 1
 fi
 
-# run exiftool on all files
+# run exiftool on all files to set DateTimeOriginal (date taken)
 exiftool \
   -api LargeFileSupport=1 \
   -d %s \
@@ -102,6 +99,7 @@ exiftool \
   "-GPSLongitude<GeoDataLongitude" \
   "-GPSLongitudeRef<GeoDataLongitude" \
   "-DateTimeOriginal<PhotoTakenTimeTimestamp" \
+  "-CreateDate<PhotoTakenTimeTimestamp" \
   -overwrite_original \
   -preserve \
   -progress \
