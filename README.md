@@ -19,3 +19,5 @@ No javascript or any other bs.
 ![Directory guide screenshot](./directory-screenshot.png)
 
 ## [LICENSE](https://github.com/Zaczero/google-photos-takeout.sh/blob/main/LICENSE)
+chmod +x google-photos-takeout.sh
+./google-photos-takeout.sh /path/to/your/takeout/folder
