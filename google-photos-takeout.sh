@@ -64,6 +64,9 @@ for i in "${!files[@]}"; do
       ln "$file" "$fullpath.json"
     fi
 
+    # set modification time from unix timestamp (macOS compatible)
+    touch -m -t "$(date -r "$timestamp" +%Y%m%d%H%M.%S)" "$fullpath"
+
     # append to fullpaths file
     echo "$fullpath" >> "$fullpaths"
 
@@ -77,18 +80,7 @@ mv "$fullpaths.tmp" "$fullpaths"
 # print fullpaths size
 echo "Found $(wc -l < "$fullpaths") unique files to process"
 
-# clear any previous accidental input
-while read -r -t 0; do read -r; done
-
-# ask for confirmation
-read -p "Looks correct? [y/N] " -n 1 -r
-printf "\n"
-
-if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-  exit 1
-fi
-
-# run exiftool on all files to set DateTimeOriginal (date taken)
+# run exiftool on all files with full metadata mapping
 exiftool \
   -api LargeFileSupport=1 \
   -d %s \
@@ -98,12 +90,31 @@ exiftool \
   "-GPSLatitudeRef<GeoDataLatitude" \
   "-GPSLongitude<GeoDataLongitude" \
   "-GPSLongitudeRef<GeoDataLongitude" \
+  "-GPSPosition<GeoDataLatitude,GeoDataLongitude" \
   "-DateTimeOriginal<PhotoTakenTimeTimestamp" \
   "-CreateDate<PhotoTakenTimeTimestamp" \
-  -overwrite_original \
-  -preserve \
-  -progress \
-  -@ "$fullpaths" || true
+  "-ModifyDate<PhotoTakenTimeTimestamp" \
+  "-Description<Description" \
+  "-ImageDescription<Description" \
+  "-Artist<GooglePhotosOrigin" \
+  "-Copyright<GooglePhotosOrigin" \
+  "-Keywords<Tags" \
+  "-Subject<Tags" \
+  "-Orientation<Rotation" \
+  "-XResolution<PhotoLastModifiedTime" \
+  "-YResolution<PhotoLastModifiedTime" \
+  "-ResolutionUnit<PhotoLastModifiedTime" \
+  "-Software<GooglePhotosOrigin" \
+  "-UserComment<GooglePhotosOrigin" \
+  "-ImageWidth<PhotoMetadataWidth" \
+  "-ImageHeight<PhotoMetadataHeight" \
+  "-ColorSpace<PhotoMetadataColorProfile" \
+  "-Codec<PhotoMetadataCodec" \
+  "-EncodingSoftware<PhotoMetadataEncodingSoftware" \
+  "-overwrite_original" \
+  "-preserve" \
+  "-progress" \
+  "-@ $fullpaths" || true
 
 # clear any previous accidental input
 while read -r -t 0; do read -r; done
@@ -117,3 +128,8 @@ if [[ $REPLY =~ ^[Yy]$ ]]; then
     rm -v "$file"
   done
 fi
+
+# delete all empty folders
+echo "Deleting empty folders..."
+find . -type d -empty -delete
+echo "Empty folders deleted."
